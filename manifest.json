@@ -1,0 +1,11 @@
+{
+	"manifest_version": 1,
+	"id": "texttourl",
+	"name": "Clickable urls",
+	"author": "gr8b",
+	"description": "Convert http and https urls in text to clicable links.",
+	"version": "1.0",
+	"namespace": "TextToUrl",
+	"url": "",
+	"actions": {}
+}
