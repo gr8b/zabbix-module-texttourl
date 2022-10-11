@@ -9,6 +9,11 @@ use DOMNode;
 use DOMNodeList;
 use DOMText;
 
+if (version_compare(ZABBIX_VERSION, '5.2', '>=')) {
+    // Starting 5.2 buffering is broken somehow, onTerminate is called after content being flushed to client.
+    ob_start();
+}
+
 class Module extends CModule {
 
     public const MATCH_RULE = '/(?<href>https?:\/\/[^\\s]+)/';
@@ -19,7 +24,11 @@ class Module extends CModule {
     ];
 
     public function onTerminate(CController $action): void {
-        echo $this->modifyResponse(ob_get_clean());
+        global $page;
+
+        if ($page === null || (is_array($page) && $page['type'] != PAGE_TYPE_IMAGE)) {
+            echo $this->modifyResponse(ob_get_clean());
+        }
     }
 
     protected function modifyResponse($content): string {
@@ -31,9 +40,11 @@ class Module extends CModule {
 
         if (array_key_exists('body', $json)) {
             $json['body'] = html_entity_decode($this->processHTMLContent($json['body']));
+
+            return json_encode($json);
         }
 
-        return json_encode($json);
+        return $content;
     }
 
     protected function processHTMLContent($html): string {
@@ -44,16 +55,19 @@ class Module extends CModule {
             return $html;
         }
 
-        $this->processNodesRecirsive($dom->getElementsByTagName('td'));
+        $this->processNodesRecirsive($dom->getElementsByTagName('td'), 10);
         
         return $dom->saveHTML();
     }
 
-    protected function processNodesRecirsive(DOMNodeList $list): DOMNodeList {
+    protected function processNodesRecirsive(DOMNodeList $list, $recursions): DOMNodeList {
         /** @var \DOMNode $node */
         foreach ($list as $node) {
             if ($node->childNodes->length) {
-                $this->processNodesRecirsive($node->childNodes);
+                if ($recursions > 0) {
+                    $this->processNodesRecirsive($node->childNodes, $recursions - 1);
+                }
+
                 continue;
             }
 

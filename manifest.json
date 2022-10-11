@@ -6,6 +6,6 @@
 	"description": "Convert http and https urls in text to clicable links.",
 	"version": "1.0",
 	"namespace": "TextToUrl",
-	"url": "",
+	"url": "https://github.com/gr8b/zabbix-module-texttourl",
 	"actions": {}
 }
